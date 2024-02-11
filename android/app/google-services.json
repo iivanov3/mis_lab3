@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "675595500750",
+    "project_id": "lab3-firebase-28856",
+    "storage_bucket": "lab3-firebase-28856.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:675595500750:android:b31959cd1c953117d7249f",
+        "android_client_info": {
+          "package_name": "com.example.lab3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNcV5C-cQ1o0qdFHPiQvTXkRsHnZ27Y14"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

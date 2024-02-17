@@ -1,8 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../../../../exam.dart';
+import '../../../../exam_model.dart';
 
 class ExamWidget extends StatefulWidget {
-  final Function(Exam) addExam;
+  final Function(ExamModel) addExam;
 
   const ExamWidget({required this.addExam, super.key});
 
@@ -14,6 +15,7 @@ class ExamWidgetState extends State<ExamWidget> {
   final TextEditingController subjectController = TextEditingController();
   DateTime selectedDate = DateTime.now();
   TimeOfDay selectedTime = TimeOfDay.now();
+  Timestamp selectedTimestamp = Timestamp.now();
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? datePicked = await showDatePicker(
@@ -45,8 +47,11 @@ class ExamWidgetState extends State<ExamWidget> {
           timePicked.hour,
           timePicked.minute,
         );
+
+        selectedTimestamp = Timestamp.fromDate(selectedDate);
       });
     }
+
   }
 
   @override
@@ -69,8 +74,8 @@ class ExamWidgetState extends State<ExamWidget> {
                 Text(
                     'Time: ${selectedDate.toLocal().toString().split(' ')[1].substring(0, 5)}'),
                 ElevatedButton(
-                  child: const Text('Select Date'),
                   onPressed: () => _selectDate(context),
+                  child: const Text('Select time'),
                 ),
               ],
             ),
@@ -79,24 +84,24 @@ class ExamWidgetState extends State<ExamWidget> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                    'Time: ${selectedDate.toLocal().toString().split(' ')[1].substring(0, 5)}'),
+                    'Date: ${selectedDate.toLocal().toString().split(' ')[1].substring(0, 5)}'),
                 ElevatedButton(
                   onPressed: () => _selectTime(context),
-                  child: const Text('Select Time'),
+                  child: const Text('Select date'),
                 ),
               ],
             ),
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () {
-                Exam exam = Exam(
-                  course: subjectController.text,
-                  timestamp: selectedDate,
+                ExamModel exam = ExamModel(
+                  subject: subjectController.text,
+                  timestamp: selectedTimestamp,
                 );
                 widget.addExam(exam);
                 Navigator.pop(context);
               },
-              child: const Text('Add Exam'),
+              child: Center(child: const Text('Add exam')),
             ),
           ],
         ),

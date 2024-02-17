@@ -1,6 +1,10 @@
+import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../../../../exam.dart';
+import 'package:lab3/exam_model.dart';
+import 'package:lab3/features/user_auth/presentation/pages/calendar_page.dart';
+import 'package:lab3/notification_controller.dart';
 import '../widgets/exam_widget.dart';
 import 'login_page.dart';
 
@@ -12,10 +16,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<Exam> exams = [
-    Exam(course: 'Mathematics 1', timestamp: DateTime(2024, 01, 01, 01, 01)),
-    Exam(course: 'Databases', timestamp: DateTime(2024, 01, 01, 01, 02)),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    AwesomeNotifications().setListeners(
+        onActionReceivedMethod: NotificationController.onActionReceivedMethod,
+        onNotificationCreatedMethod: NotificationController.onNotificationCreatedMethod,
+        onNotificationDisplayedMethod: NotificationController.onNotificationDisplayedMethod,
+        onDismissActionReceivedMethod: NotificationController.onDismissedReceivedMethod
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,49 +35,73 @@ class _HomePageState extends State<HomePage> {
         actions: [
           IconButton(
               icon: const Icon(Icons.add),
-              onPressed: () => _addExamFunction(context)),
+              onPressed: () => _addExamFunction(context),
+          ),
           IconButton(
-            icon: const Icon(Icons.login),
+            icon: const Icon(Icons.calendar_today),
+            onPressed: () => _toCalendarPage(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
             onPressed: _signOut,
           ),
         ],
       ),
-      body: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          crossAxisSpacing: 8.0,
-          mainAxisSpacing: 8.0,
-        ),
-        itemCount: exams.length,
-        itemBuilder: (context, index) {
-          final course = exams[index].course;
-          final timestamp = exams[index].timestamp;
+      body: StreamBuilder<List<ExamModel>>(
+        stream: _readData(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.waiting &&
+              snapshot.hasData &&
+              snapshot.hasData != null) {
+            final List<ExamModel> exams = snapshot.data!;
 
-          return Card(
-              color: Colors.amberAccent,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 20),
-                    ),
-                    const SizedBox(height: 8.0),
-                    Text(
-                      timestamp.toString().substring(0, 19),
-                      style: const TextStyle(color: Colors.black),
-                    ),
-                  ],
-                ),
+            return GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 8.0,
+                mainAxisSpacing: 8.0,
               ),
-              elevation: 4, // Add elevation for shadow effect
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Add rounded corners
-                  side: BorderSide(color: Colors.black)) // Add border color
-              );
+              itemCount: exams.length,
+              itemBuilder: (context, index) {
+                final subject = exams[index].subject;
+                final timestamp = exams[index].timestamp;
+
+                return Card(
+                  color: Colors.amberAccent,
+                  elevation: 4, // Add elevation for shadow effect
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    // Add rounded corners
+                    side: BorderSide(color: Colors.black),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          subject!,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
+                        ),
+                        const SizedBox(height: 8.0),
+                        Text(
+                          timestamp!.toDate().toString().substring(0, 19),
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                      ],
+                    ),
+                  ), // Add border color
+                );
+              },
+            );
+          } else if (snapshot.hasError) {
+            return Center(child: Text(snapshot.error.toString()));
+          } else {
+            return Center(child: CircularProgressIndicator());
+          }
         },
       ),
     );
@@ -75,30 +109,64 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _signOut() async {
     await FirebaseAuth.instance.signOut();
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => LoginPage()),
-      (route) => false,
-    );
+    Navigator.pushAndRemoveUntil(context,
+        MaterialPageRoute(builder: (context) => LoginPage()), (route) => false);
   }
 
   Future<void> _addExamFunction(BuildContext context) async {
     return showModalBottomSheet(
-        context: context,
-        builder: (_) {
-          return GestureDetector(
-            onTap: () {},
-            behavior: HitTestBehavior.opaque,
-            child: ExamWidget(
-              addExam: _addExam,
-            ),
-          );
-        });
+      context: context,
+      builder: (_) {
+        return GestureDetector(
+          onTap: () {},
+          behavior: HitTestBehavior.opaque,
+          child: ExamWidget(
+            addExam: _addExam,
+          ),
+        );
+      },
+    );
   }
 
-  void _addExam(Exam exam) {
+  void _addExam(ExamModel examModel) {
     setState(() {
-      exams.add(exam);
+      _createData(examModel);
+      AwesomeNotifications().createNotification(
+        content: NotificationContent(
+          id: 1,
+          channelKey: "basic_channel",
+          title: "Exam added",
+          body: "You have successfully added an exam.",
+        ),
+      );
     });
+  }
+
+  void _createData(ExamModel examModel) {
+    final examCollection = FirebaseFirestore.instance.collection("exams");
+
+    String id = examCollection.doc().id;
+    final newExam = ExamModel(
+      subject: examModel.subject,
+      timestamp: examModel.timestamp,
+      id: id,
+    ).toJson();
+
+    examCollection.doc(id).set(newExam);
+  }
+
+  Stream<List<ExamModel>> _readData() {
+    final examCollection = FirebaseFirestore.instance.collection("exams");
+
+    return examCollection.snapshots().map((querySnapshot) =>
+        querySnapshot.docs.map((e) => ExamModel.fromSnapshot(e)).toList());
+  }
+
+  void _toCalendarPage() async {
+    final exams = await _readData().first;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CalendarPage(exams: exams)));
   }
 }

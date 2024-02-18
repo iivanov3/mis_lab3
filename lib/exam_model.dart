@@ -1,12 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart';
 
 class ExamModel {
   final String? subject;
   final Timestamp? timestamp;
   final String? id;
+  final String? longitude;
+  final String? latitude;
 
-  ExamModel({this.id, this.subject, this.timestamp});
+  ExamModel(
+      {this.id, this.subject, this.timestamp, this.longitude, this.latitude});
 
   static ExamModel fromSnapshot(
       DocumentSnapshot<Map<String, dynamic>> snapshot) {
@@ -14,6 +16,8 @@ class ExamModel {
       subject: snapshot['subject'],
       timestamp: snapshot['timestamp'],
       id: snapshot['id'],
+      longitude: snapshot['longitude'],
+      latitude: snapshot['latitude'],
     );
   }
 
@@ -22,6 +26,8 @@ class ExamModel {
       "subject": subject,
       "timestamp": timestamp,
       "id": id,
+      "longitude": longitude,
+      "latitude": latitude,
     };
   }
 
@@ -33,6 +39,8 @@ class ExamModel {
       subject: examModel.subject,
       timestamp: examModel.timestamp,
       id: examModel.id,
+      longitude: examModel.longitude,
+      latitude: examModel.latitude,
     ).toJson();
 
     examCollection.doc(id).set(newExam);

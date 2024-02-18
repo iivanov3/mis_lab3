@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:lab3/exam_model.dart';
 import 'package:lab3/features/user_auth/presentation/pages/calendar_page.dart';
+import 'package:lab3/features/user_auth/presentation/widgets/map_widget.dart';
 import 'package:lab3/notification_controller.dart';
 import '../widgets/exam_widget.dart';
 import 'login_page.dart';
@@ -21,10 +22,12 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     AwesomeNotifications().setListeners(
         onActionReceivedMethod: NotificationController.onActionReceivedMethod,
-        onNotificationCreatedMethod: NotificationController.onNotificationCreatedMethod,
-        onNotificationDisplayedMethod: NotificationController.onNotificationDisplayedMethod,
-        onDismissActionReceivedMethod: NotificationController.onDismissedReceivedMethod
-    );
+        onNotificationCreatedMethod:
+            NotificationController.onNotificationCreatedMethod,
+        onNotificationDisplayedMethod:
+            NotificationController.onNotificationDisplayedMethod,
+        onDismissActionReceivedMethod:
+            NotificationController.onDismissedReceivedMethod);
   }
 
   @override
@@ -34,8 +37,8 @@ class _HomePageState extends State<HomePage> {
         title: const Text('Exams schedule'),
         actions: [
           IconButton(
-              icon: const Icon(Icons.add),
-              onPressed: () => _addExamFunction(context),
+            icon: const Icon(Icons.add),
+            onPressed: () => _addExamFunction(context),
           ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
@@ -68,10 +71,9 @@ class _HomePageState extends State<HomePage> {
 
                 return Card(
                   color: Colors.amberAccent,
-                  elevation: 4, // Add elevation for shadow effect
+                  elevation: 4,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
-                    // Add rounded corners
                     side: BorderSide(color: Colors.black),
                   ),
                   child: Padding(
@@ -91,9 +93,42 @@ class _HomePageState extends State<HomePage> {
                           timestamp!.toDate().toString().substring(0, 19),
                           style: const TextStyle(color: Colors.black),
                         ),
+                        const SizedBox(height: 60.0),
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => MapClass(
+                                  latitude:
+                                      double.tryParse(exams[index].latitude!)!,
+                                  longitude:
+                                      double.tryParse(exams[index].longitude!)!,
+                                  locationName: "FINKI",
+                                ),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.lightBlueAccent,
+                            padding: EdgeInsets.symmetric(
+                                vertical: 15, horizontal: 40),
+                            textStyle: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            elevation: 3,
+                          ),
+                          child: Text(
+                            'See location',
+                            style: TextStyle(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                  ), // Add border color
+                  ),
                 );
               },
             );
@@ -150,6 +185,8 @@ class _HomePageState extends State<HomePage> {
       subject: examModel.subject,
       timestamp: examModel.timestamp,
       id: id,
+      latitude: examModel.latitude,
+      longitude: examModel.longitude,
     ).toJson();
 
     examCollection.doc(id).set(newExam);
@@ -165,8 +202,7 @@ class _HomePageState extends State<HomePage> {
   void _toCalendarPage() async {
     final exams = await _readData().first;
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => CalendarPage(exams: exams)));
+    Navigator.push(context,
+        MaterialPageRoute(builder: (context) => CalendarPage(exams: exams)));
   }
 }

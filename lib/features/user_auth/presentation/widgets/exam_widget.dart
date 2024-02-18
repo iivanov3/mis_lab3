@@ -97,6 +97,8 @@ class ExamWidgetState extends State<ExamWidget> {
                 ExamModel exam = ExamModel(
                   subject: subjectController.text,
                   timestamp: selectedTimestamp,
+                  latitude: "42.00423",
+                  longitude: "21.40954",
                 );
                 widget.addExam(exam);
                 Navigator.pop(context);
